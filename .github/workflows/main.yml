@@ -15,10 +15,18 @@ jobs:
 
       - name: Extract app-source.zip
         run: |
-          if [ -f "app-source.zip" ]; then
-            mkdir -p app
-            unzip -q -o app-source.zip -d app
-          fi
+          python3 -c "import zipfile, os
+          if os.path.exists('app-source.zip'):
+              with zipfile.ZipFile('app-source.zip', 'r') as z:
+                  for info in z.infolist():
+                      p = os.path.join('app', info.filename.replace('\\\\', '/'))
+                      if info.is_dir() or p.endswith('/'):
+                          os.makedirs(p, exist_ok=True)
+                      else:
+                          os.makedirs(os.path.dirname(p), exist_ok=True)
+                          with open(p, 'wb') as f:
+                              f.write(z.read(info.filename))
+          "
 
       - name: Setup JDK 17
         uses: actions/setup-java@v4
